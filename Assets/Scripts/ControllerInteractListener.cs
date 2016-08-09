@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor.SceneManagement;
 using RenderHeads.Media.AVProVideo;
 
 public class ControllerInteractListener : MonoBehaviour {
@@ -20,6 +19,8 @@ public class ControllerInteractListener : MonoBehaviour {
     private uint otherControllerIndex;
 
     public MediaPlayer mp;
+    public ValveFogFader fog;
+    public GameObject videosphere;
 
     private List<IntervalRendererActivator> activatorsRetail;
     private GameObject sceneCarVisor;
@@ -85,12 +86,13 @@ public class ControllerInteractListener : MonoBehaviour {
 
         if (e.target.tag == "ProductCarVisor")
         {
+
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
+                fog.FadeFogOut(3.0f);
                 ira.IntervalDeactivateTargets();
                 mp.Control.Seek(10000);
                 mp.Control.Play();
-
             }
         }
 
@@ -101,6 +103,8 @@ public class ControllerInteractListener : MonoBehaviour {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
                 ira.IntervalDeactivateTargets();
+                mp.Control.Seek(20000);
+                mp.Control.Play();
 
             }
         }
@@ -112,7 +116,8 @@ public class ControllerInteractListener : MonoBehaviour {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
                 ira.IntervalDeactivateTargets();
-
+                mp.Control.Seek(30000);
+                mp.Control.Play();
             }
         }
 
@@ -124,6 +129,8 @@ public class ControllerInteractListener : MonoBehaviour {
 
             {
                 ira.IntervalDeactivateTargets();
+                mp.Control.Seek(40000);
+                mp.Control.Play();
 
             }
         }
@@ -135,6 +142,8 @@ public class ControllerInteractListener : MonoBehaviour {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
                 ira.IntervalDeactivateTargets();
+                mp.Control.Seek(50000);
+                mp.Control.Play();
 
             }
         }
@@ -146,7 +155,7 @@ public class ControllerInteractListener : MonoBehaviour {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
                 ira.IntervalDeactivateTargets();
-
+                mp.Control.Seek(60000);
                 mp.Control.Play();
             }
         }
@@ -163,8 +172,11 @@ public class ControllerInteractListener : MonoBehaviour {
         {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
+                fog.FadeFogIn(3.0f);
+                
+                mp.Control.Seek(0);
+                mp.Control.Stop();
                 ira.IntervalActivateTargets();
-
             }
         }
 
@@ -174,6 +186,9 @@ public class ControllerInteractListener : MonoBehaviour {
         {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
+                videosphere.transform.GetComponent<Renderer>().material.color = Color.white;
+                mp.Control.Pause();
+                mp.Control.Seek(0);
                 ira.IntervalActivateTargets();
 
             }
@@ -185,6 +200,8 @@ public class ControllerInteractListener : MonoBehaviour {
         {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
+                mp.Control.Pause();
+                mp.Control.Seek(30000);
                 ira.IntervalActivateTargets();
 
             }
@@ -196,8 +213,9 @@ public class ControllerInteractListener : MonoBehaviour {
         {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
+                mp.Control.Pause();
+                mp.Control.Seek(40000);
                 ira.IntervalActivateTargets();
-
             }
         }
 
@@ -207,8 +225,9 @@ public class ControllerInteractListener : MonoBehaviour {
         {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
+                mp.Control.Pause();
+                mp.Control.Seek(50000);
                 ira.IntervalActivateTargets();
-
             }
         }
 
@@ -218,8 +237,9 @@ public class ControllerInteractListener : MonoBehaviour {
         {
             foreach (IntervalRendererActivator ira in activatorsRetail)
             {
+                mp.Control.Pause();
+                mp.Control.Seek(60000);
                 ira.IntervalActivateTargets();
-
             }
         }
     }

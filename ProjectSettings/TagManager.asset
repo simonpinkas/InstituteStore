@@ -28,6 +28,7 @@ TagManager:
   - ProductUniverseBluRay
   - ProductAvocado
   - ActivatorRetail
+  - Videosphere
   layers:
   - Default
   - TransparentFX

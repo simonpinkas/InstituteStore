@@ -1,4 +1,4 @@
-﻿//========= Copyright 2014, Valve Corporation, All rights reserved. ===========
+﻿//======= Copyright (c) Valve Corporation, All rights reserved. ===============
 //
 // Purpose: Render model of associated tracked object
 //
@@ -422,7 +422,7 @@ public class SteamVR_RenderModel : MonoBehaviour
 					}
 				}
 
-				material = new Material(shader != null ? shader : Shader.Find("vr_standard"));
+				material = new Material(shader != null ? shader : Shader.Find("Standard"));
 				material.mainTexture = texture;
 				//material.hideFlags = HideFlags.DontUnloadUnusedAsset;
 

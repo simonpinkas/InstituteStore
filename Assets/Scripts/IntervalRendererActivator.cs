@@ -2,9 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 
-//public enum StartMode { intervalActivateAtStart, allTargetsInactiveAtStart, allTargetsActiveAtStart }
 
 public class IntervalRendererActivator : MonoBehaviour
 {
@@ -204,7 +202,24 @@ public class IntervalRendererActivator : MonoBehaviour
             yield return new WaitForSeconds(finalDeactivateInterval);
         }
     }
+
+    /*
+    IEnumerator FadeTo(Renderer r, float aValue, float aTime)
+    {
+        float alpha = r.material.color.a;
+        for (float t = 0.0f; t < 1.0f ; t += Time.deltaTime / aTime)
+        {
+            Color newColor = new Color(1, 1, 1, Mathf.Lerp(alpha, aValue, t));
+            r.material.color = newColor;
+            yield return null;
+        }
+    }
+    */
+
 }
+
+
+
 
 
 

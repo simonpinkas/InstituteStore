@@ -31,17 +31,19 @@ EditorBuildSettings:
     path: Assets/SampleScenes/Scenes/RollerBall.unity
   - enabled: 0
     path: Assets/Scenes/Scene0RetailFloor.unity
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/RTSCENEBACKUP/Scene1CarVisor.unity
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/RTSCENEBACKUP/Scene2Candle.unity
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/RTSCENEBACKUP/Scene3BalanceBar.unity
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/RTSCENEBACKUP/Scene4NailPolish.unity
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/RTSCENEBACKUP/Scene5JetLagPills.unity
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/RTSCENEBACKUP/Scene6Avocado.unity
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/RTSCENEBACKUP/Scene7UniverseBluRay.unity
+  - enabled: 1
+    path: Assets/Scenes/SceneRetail.unity

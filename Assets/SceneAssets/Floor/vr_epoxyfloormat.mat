@@ -169,16 +169,16 @@ Material:
       second: 0.08
     - first:
         name: g_flReflectanceBias
-      second: 0.384
+      second: 0.106
     - first:
         name: g_flReflectanceMax
-      second: 0.46
+      second: 0.477
     - first:
         name: g_flReflectanceMin
-      second: 0.384
+      second: 0.106
     - first:
         name: g_flReflectanceScale
-      second: 0.076000005
+      second: 0.371
     m_Colors:
     - first:
         name: _Color

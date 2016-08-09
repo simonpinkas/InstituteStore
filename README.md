@@ -11,8 +11,8 @@ https://unity3d.com/unity/whats-new/unity-5.4.0
 ###SteamVR
 https://www.assetstore.unity3d.com/en/#!/content/32647
 Support Forum: https://steamcommunity.com/app/358720/discussions/
-###AVPro Video
-https://www.assetstore.unity3d.com/en/#!/content/56355
+###AVPro Video (Windows)
+https://www.assetstore.unity3d.com/en/#!/content/57969
 Documentation: http://downloads.renderheads.com/docs/UnityAVProVideo.pdf
 ###The Lab Renderer
 https://www.assetstore.unity3d.com/en/#!/content/63141

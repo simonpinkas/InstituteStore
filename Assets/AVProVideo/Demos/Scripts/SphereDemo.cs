@@ -1,5 +1,5 @@
 ﻿#if UNITY_5 && !UNITY_5_0 && !UNITY_5_1 && !UNITY_5_2 && !UNITY_5_3_0 && !UNITY_5_3_1 && !UNITY_5_3_2
-#define UNITY_HAS_VRCLASS
+	#define UNITY_HAS_VRCLASS
 #endif
 
 using UnityEngine;
@@ -62,6 +62,8 @@ public class SphereDemo : MonoBehaviour
 			{
 				float h = 40.0f * -Input.GetAxis("Mouse X") * Time.deltaTime;
 				float v = 40.0f * Input.GetAxis("Mouse Y") * Time.deltaTime;
+				h = Mathf.Clamp(h, -0.5f, 0.5f);
+				v = Mathf.Clamp(v, -0.5f, 0.5f);
 				_spinX += h;
 				_spinY += v;
 			}

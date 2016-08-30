@@ -7,9 +7,10 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: ShelfMat
-  m_Shader: {fileID: 4800000, guid: 908b379d4818cd64184b95a21123d909, type: 3}
-  m_ShaderKeywords: S_RECEIVE_SHADOWS S_SPECULAR_METALLIC _ALPHATEST_ON _NORMALMAP
-  m_LightmapFlags: 6
+  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  m_ShaderKeywords: S_RECEIVE_SHADOWS S_SPECULAR_METALLIC _ALPHATEST_ON _EMISSION
+    _NORMALMAP
+  m_LightmapFlags: 1
   m_CustomRenderQueue: 2450
   stringTagMap:
     OriginalShader: Standard
@@ -92,7 +93,7 @@ Material:
       second: 2
     - first:
         name: _Cutoff
-      second: 0.845
+      second: 0.783
     - first:
         name: _DetailNormalMapScale
       second: 1
@@ -107,13 +108,13 @@ Material:
       second: 1
     - first:
         name: _Glossiness
-      second: 0.832
+      second: 0.877
     - first:
         name: _GlossyReflections
       second: 1
     - first:
         name: _Metallic
-      second: 0.326
+      second: 0.885
     - first:
         name: _Mode
       second: 1

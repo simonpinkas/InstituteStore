@@ -1,4 +1,10 @@
-﻿#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX || UNITY_IPHONE || UNITY_IOS || UNITY_TVOS
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX || UNITY_IPHONE || UNITY_IOS || UNITY_TVOS
+#if UNITY_5
+	#if !UNITY_5_0 && !UNITY_5_1
+		#define AVPROVIDEO_ISSUEPLUGINEVENT_UNITY52
+	#endif
+#endif
+
 using UnityEngine;
 using System;
 using System.Collections;
@@ -11,62 +17,7 @@ using AOT;
 
 namespace RenderHeads.Media.AVProVideo
 {
-
-//	IMediaInfo
-//
-//	float	GetDurationMs();
-//	int		GetVideoWidth();
-//	int		GetVideoHeight();
-//
-//	float	GetVideoPlaybackRate();
-//
-//	bool	HasVideo();
-//	bool	HasAudio();
-
-//	BaseMediaPlayer
-//	
-//	public abstract String	GetVersion();
-//	
-//	public abstract bool	OpenVideoFromFile( string path );
-//	public abstract void    CloseVideo();
-//	
-//	public abstract void	SetLooping( bool bLooping );
-//	public abstract bool	IsLooping();
-//	
-//  public abstract bool	HasMetaData();
-//	public abstract bool	CanPlay();
-//	public abstract void	Play();
-//	public abstract void	Pause();
-//	public abstract void	Stop();
-//	public abstract void	Rewind();
-//	
-//	public abstract void	Seek(float timeMs);
-//	public abstract float	GetCurrentTimeMs();
-//	
-//	public abstract float	GetDurationMs();
-//	public abstract int		GetVideoWidth();
-//	public abstract int		GetVideoHeight();
-//	public abstract float	GetVideoPlaybackRate();
-//	
-//	public abstract bool	IsSeeking();
-//	public abstract bool	IsPlaying();
-//	public abstract bool	IsPaused();
-//	public abstract bool	IsFinished();
-//	
-//	public abstract Texture	GetTexture();
-//	public abstract int		GetTextureFrameCount();
-//	public abstract bool	RequiresVerticalFlip();
-//	
-//	
-//	public abstract void	MuteAudio(bool bMuted);
-//	public abstract void	SetVolume(float volume);
-//	public abstract float	GetVolume();
-//	
-//	public abstract void	Update();
-//	public abstract void	Render();
-//	public abstract void	Dispose();
-	
-	public class OSXMediaPlayer : BaseMediaPlayer
+	public sealed class OSXMediaPlayer : BaseMediaPlayer
 	{
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
 		private const string PluginName = "AVProVideo";
@@ -76,12 +27,10 @@ namespace RenderHeads.Media.AVProVideo
 
 		// Native Interface
 
-		private enum AVPPluginEvent
+		private enum AVPPluginEventType
 		{
-			Nop,
-			Initialise,
-			PlayerUpdate,
-			PlayerShutdown
+			PlayerRender,
+			PlayerFreeResources,
 		}
 
 		private enum AVPPlayerStatus
@@ -116,9 +65,14 @@ namespace RenderHeads.Media.AVProVideo
 		
 		[DllImport(PluginName)]
 		private static extern string AVPGetVersion();
-		
+
+#if AVPROVIDEO_ISSUEPLUGINEVENT_UNITY52
 		[DllImport(PluginName)]
 		private static extern IntPtr AVPGetRenderEventFunc();
+#endif
+
+		[DllImport(PluginName)]
+		private static extern ErrorCode AVPPlayerGetLastError(IntPtr player);
 
 		[DllImport(PluginName)]
 		private static extern double AVPPlayerGetCurrentTime(IntPtr player);
@@ -133,22 +87,22 @@ namespace RenderHeads.Media.AVProVideo
 		private static extern double AVPPlayerGetFrameRate(IntPtr player);
 		
 		[DllImport(PluginName)]
-		private static extern double AVPPlayerGetNominalFrameRate(IntPtr player);
+		private static extern float AVPPlayerGetNominalFrameRate(IntPtr player);
 
 		[DllImport(PluginName)]
 		private static extern int AVPPlayerGetHandle(IntPtr player);
 
 		[DllImport(PluginName)]
 		private static extern AVPPlayerStatus AVPPlayerGetStatus(IntPtr player);
-		
-		[DllImport(PluginName)]
-		private static extern IntPtr AVPPlayerGetTextureHandle(IntPtr player);
 
 		[DllImport(PluginName)]
-		private static extern void AVPPlayerGetTextureSize(IntPtr player, out int width, out int height);
+		private static extern bool AVPPlayerIsBuffering(IntPtr player);
 
 		[DllImport(PluginName)]
-		private static extern bool AVPPlayerTextureSizeHasChanged(IntPtr player);
+		private static extern float AVPPlayerBufferedDuration(IntPtr player);
+
+		[DllImport(PluginName)]
+		private static extern bool AVPPlayerGetTexture(IntPtr player, out IntPtr texture, out int width, out int height, out TextureFormat format, out bool flipped);
 
 		[DllImport(PluginName)]
 		private static extern float AVPPlayerGetVolume(IntPtr player);
@@ -199,7 +153,25 @@ namespace RenderHeads.Media.AVProVideo
 		private static extern void AVPPlayerPause(IntPtr player);
 		
 		[DllImport(PluginName)]
-		private static extern void AVPPlayerSeekToTime(IntPtr player, double time);
+		private static extern void AVPPlayerSeekToTime(IntPtr player, double time, bool fast);
+
+		[DllImport(PluginName)]
+		private static extern float AVPPlayerGetPlaybackRate(IntPtr player);
+
+		[DllImport(PluginName)]
+		private static extern void AVPPlayerSetPlaybackRate(IntPtr player, float rate);
+
+		[DllImport(PluginName)]
+		private static extern bool AVPPlayerUpdate(IntPtr player);
+
+		[DllImport(PluginName)]
+		private static extern int AVPPlayerGetAudioTrackCount(IntPtr player);
+
+		[DllImport(PluginName)]
+		private static extern int AVPPlayerGetCurrentAudioTrack(IntPtr player);
+
+		[DllImport(PluginName)]
+		private static extern void AVPPlayerSetAudioTrack(IntPtr player, int track);
 
 		[DllImport(PluginName)]
 		private static extern void AVPPluginRegister();
@@ -213,6 +185,9 @@ namespace RenderHeads.Media.AVProVideo
 		// MediaPlayer Interface
 
 		private static bool _initialised = false;
+#if AVPROVIDEO_ISSUEPLUGINEVENT_UNITY52
+		private static IntPtr _renderEventFunc = IntPtr.Zero;
+#endif
 
 #if UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -238,27 +213,20 @@ namespace RenderHeads.Media.AVProVideo
 			}
 		}
 
-		private static void IssuePluginEvent(AVPPluginEvent type, int param)
+		private static void IssuePluginEvent(AVPPluginEventType type, int param)
 		{
 			// Build eventId from the type and param.
-			int eventId = 0x5d5ac000 | ((int)type << 8);
+			int eventId = 0x0FA60000 | ((int)type << 12);
+			eventId |= param & 0xfff;
 
-			switch (type)
-			{
-			case AVPPluginEvent.PlayerUpdate:
-			case AVPPluginEvent.PlayerShutdown:
-				eventId |= param & 0xff;
-				break;
-			}
-
-#if UNITY_5 && !UNITY_5_0 && !UNITY_5_1
-				GL.IssuePluginEvent(AVPGetRenderEventFunc(), eventId);
+#if AVPROVIDEO_ISSUEPLUGINEVENT_UNITY52
+			GL.IssuePluginEvent(_renderEventFunc, eventId);
 #else
-				GL.IssuePluginEvent(eventId);
+			GL.IssuePluginEvent(eventId);
 #endif
 		}
 
-		private static void Initialise()
+		static void Initialise()
 		{
 			if (!_initialised)
 			{
@@ -272,22 +240,38 @@ namespace RenderHeads.Media.AVProVideo
 				IntPtr func = Marshal.GetFunctionPointerForDelegate(callbackDelegate);
 				AVPPluginSetDebugLogFunction(func);
 
-				// Initialisation needs to happen on a render thread.
-				IssuePluginEvent(AVPPluginEvent.Initialise, 0);
+				AVPPluginInitialise();
+
+#if AVPROVIDEO_ISSUEPLUGINEVENT_UNITY52
+				_renderEventFunc = AVPGetRenderEventFunc();
+#endif
 			}
 		}
 
-		private IntPtr _player = IntPtr.Zero;	// Handle to the native player.
+		private IntPtr _player = IntPtr.Zero;	// The native player instance.
+		private int _handle = 0;	// Handle to the native player for use with IssuePluginEvent.
 		private Texture2D _texture = null;
-		private IntPtr _nativeTexture = IntPtr.Zero;
 		private int _width = 0;
 		private int _height = 0;
+		private bool _flipped = false;
 		private bool _isMetaDataReady = false;
+
+		static OSXMediaPlayer()
+		{
+			Initialise();
+		}
 
 		public OSXMediaPlayer()
 		{
-			OSXMediaPlayer.Initialise();
 			_player = AVPPlayerNew();
+			_handle = AVPPlayerGetHandle(_player);
+		}
+
+		// Convenience method for calling OSXMediaPlayer.IssuePluginEvent.
+		//
+		private void IssuePluginEvent(AVPPluginEventType type)
+		{
+			OSXMediaPlayer.IssuePluginEvent(type, _handle);
 		}
 		
 		// BaseMediaPlayer Overrides
@@ -315,11 +299,15 @@ namespace RenderHeads.Media.AVProVideo
 
 			if (_texture != null)
 			{
+				IssuePluginEvent(AVPPluginEventType.PlayerFreeResources);
+				// Have to update with zero to release Metal textures!
+				_texture.UpdateExternalTexture(IntPtr.Zero);
 				Texture2D.Destroy(_texture);
 				_texture = null;
 			}
-			_width = _height = 0;
-			_nativeTexture = IntPtr.Zero;
+
+			_width = 0;
+			_height = 0;
 			_isMetaDataReady = false;
 		}
 
@@ -370,17 +358,32 @@ namespace RenderHeads.Media.AVProVideo
 
 		public override void Rewind()
 		{
-			AVPPlayerSeekToTime(_player, 0.0);
+			AVPPlayerSeekToTime(_player, 0.0, true);
 		}
 
 		public override void Seek(float ms)
 		{
-			AVPPlayerSeekToTime(_player, ms / 1000.0);
+			AVPPlayerSeekToTime(_player, ms / 1000.0, false);
+		}
+
+		public override void SeekFast(float ms)
+		{
+			AVPPlayerSeekToTime(_player, ms / 1000.0, true);
 		}
 
 		public override float GetCurrentTimeMs()
 		{
 			return (float)(AVPPlayerGetCurrentTime(_player) * 1000.0f);
+		}
+
+		public override void SetPlaybackRate(float rate)
+		{
+			AVPPlayerSetPlaybackRate(_player, rate);
+		}
+
+		public override float GetPlaybackRate()
+		{
+			return AVPPlayerGetPlaybackRate(_player);
 		}
 
 		public override float GetDurationMs()
@@ -398,7 +401,7 @@ namespace RenderHeads.Media.AVProVideo
 			return _height;
 		}
 
-		public override float GetVideoPlaybackRate()
+		public override float GetVideoDisplayRate()
 		{
 			return (float)AVPPlayerGetFrameRate(_player);
 		}
@@ -423,9 +426,26 @@ namespace RenderHeads.Media.AVProVideo
 			return AVPPlayerGetStatus(_player) == AVPPlayerStatus.Finished;
 		}
 
+		public override bool IsBuffering()
+		{
+			return AVPPlayerIsBuffering(_player);
+		}
+
+		public override float GetBufferingProgress()
+		{
+			return AVPPlayerBufferedDuration(_player);
+		}
+
+		// IMediaProducer
+
 		public override Texture GetTexture()
 		{
-			return _texture;
+			Texture result = null;
+			if (GetTextureFrameCount() > 0)
+			{
+				result = _texture;
+			}
+			return result;
 		}
 
 		public override int GetTextureFrameCount()
@@ -435,8 +455,10 @@ namespace RenderHeads.Media.AVProVideo
 
 		public override bool RequiresVerticalFlip()
 		{
-			return false;
+			return _flipped;
 		}
+
+		//
 
 		public override bool IsMuted()
 		{
@@ -458,14 +480,62 @@ namespace RenderHeads.Media.AVProVideo
 			return AVPPlayerGetVolume(_player);
 		}
 
+		public override int GetAudioTrackCount()
+		{
+			return AVPPlayerGetAudioTrackCount(_player);
+		}
+
+		public override int GetCurrentAudioTrack()
+		{
+			return AVPPlayerGetCurrentAudioTrack(_player);
+		}
+
+		public override void SetAudioTrack(int track)
+		{
+			AVPPlayerSetAudioTrack(_player, track);
+		}
+
+		public override float GetVideoFrameRate()
+		{
+			return AVPPlayerGetNominalFrameRate(_player);
+		}
+
 		public override void Render()
 		{
-			OSXMediaPlayer.IssuePluginEvent(AVPPluginEvent.PlayerUpdate, AVPPlayerGetHandle(_player));
+
+		}
+
+		public void UpdateTexture()
+		{
+			IntPtr native;
+			int width;
+			int height;
+			TextureFormat format;
+			bool flipped;
+			if (AVPPlayerGetTexture(_player, out native, out width, out height, out format, out flipped))
+			{
+				if (_texture == null || _texture.width != width || _texture.height != height || _texture.format != format)
+				{
+					Debug.Log("CreateExternalTexture(" + width + ", " + height + ", " + format + ", false, false, " + native + ")");
+					_texture = Texture2D.CreateExternalTexture(width, height, format, /*mipmap*/ false, /*linear*/ false, native);
+					_width = width;
+					_height = height;
+				}
+				else
+				{
+					_texture.UpdateExternalTexture(native);
+				}
+
+				_flipped = flipped;
+			}
 		}
 
 		public override void Update()
 		{
-			// Called before Render.
+			if (AVPPlayerUpdate(_player))
+				IssuePluginEvent(AVPPluginEventType.PlayerRender);
+			_lastError = AVPPlayerGetLastError(_player);
+			UpdateTexture();
 
 			// Check for meta data to become available
 			if (!_isMetaDataReady)
@@ -474,19 +544,11 @@ namespace RenderHeads.Media.AVProVideo
 				{
 					if (HasVideo())
 					{
-						int width = 0, height = 0;
-						AVPPlayerGetTextureSize(_player, out width, out height);
-
-						if (width > 0 && height > 0)
+						if (_width > 0 && _height > 0)
 						{
-							if (Mathf.Max(width, height) > SystemInfo.maxTextureSize)
+							if (Mathf.Max(_width, _height) > SystemInfo.maxTextureSize)
 							{
 								Debug.LogError("[AVProVideo] Video dimensions larger than maxTextureSize");
-							}
-							else
-							{
-								_width = width;
-								_height = height;
 							}
 							_isMetaDataReady = true;
 						}
@@ -497,72 +559,24 @@ namespace RenderHeads.Media.AVProVideo
 					}
 				}
 			}
-
-			// Free texture
-			if (_texture != null)
-			{
-				IntPtr native = AVPPlayerGetTextureHandle(_player);
-				if (native == IntPtr.Zero)
-				{
-					if (_texture != null)
-					{
-						Texture2D.Destroy(_texture);
-						_texture = null;
-					}
-					_width = _height = 0;
-					_nativeTexture = IntPtr.Zero;
-				}
-			}
-
-			if (HasVideo() && _width > 0 && _height > 0)
-			{
-				IntPtr native = AVPPlayerGetTextureHandle(_player);
-				
-				int width = 0, height = 0;
-				AVPPlayerGetTextureSize(_player, out width, out height);
-
-				if (_texture != null)
-				{
-					// Point to a new texture
-					if (native != _nativeTexture)
-					{
-						_texture.UpdateExternalTexture(native);
-						_nativeTexture = native;
-
-						_width = width;
-						_height = height;
-					}
-				}
-				if (_texture == null || width != _width || height != _height)
-				{
-					TextureFormat format = TextureFormat.BGRA32;
-					bool mipmap = false;
-					bool linear = false;
-
-					// Free existing texture if any
-					if (_texture != null)
-					{
-						Texture2D.Destroy(_texture);
-						_texture = null;
-					}
-					_width = _height = 0;
-					_nativeTexture = IntPtr.Zero;
-
-					_texture = Texture2D.CreateExternalTexture(width, height, format, mipmap, linear, native);
-					_nativeTexture = native;
-					_width = width;
-					_height = height;
-
-					OSXMediaPlayer.IssuePluginEvent(AVPPluginEvent.PlayerUpdate, AVPPlayerGetHandle(_player));
-				}
-			}
 		}
 
 		public override void Dispose()
 		{
-			OSXMediaPlayer.IssuePluginEvent(AVPPluginEvent.PlayerShutdown, AVPPlayerGetHandle(_player));
-			AVPPlayerRelease(_player);
-			_player = IntPtr.Zero;
+			if (_texture != null)
+			{
+				IssuePluginEvent(AVPPluginEventType.PlayerFreeResources);
+				// Have to update with zero to release Metal textures!
+				_texture.UpdateExternalTexture(IntPtr.Zero);
+				Texture2D.Destroy(_texture);
+				_texture = null;
+			}
+
+			if (_player != IntPtr.Zero)
+			{
+				AVPPlayerRelease(_player);
+				_player = IntPtr.Zero;
+			}
 		}
 
 	}

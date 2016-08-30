@@ -15,6 +15,7 @@ namespace RenderHeads.Media.AVProVideo.Demos
 	/// </summary>
 	public class SimpleController : MonoBehaviour
 	{
+		public string _folder = "AVProVideoSamples/";
 		public string[] _filenames = new string[] { "SampleSphere.mp4", "BigBuckBunny_360p30.mp3", "BigBuckBunny_720p30.mp4" };
 		public string[] _streams;
 		public MediaPlayer _mediaPlayer;
@@ -38,7 +39,7 @@ namespace RenderHeads.Media.AVProVideo.Demos
 		}
 
 		// Callback function to handle events
-		public void OnMediaPlayerEvent(MediaPlayer mp, MediaPlayerEvent.EventType et)
+		public void OnMediaPlayerEvent(MediaPlayer mp, MediaPlayerEvent.EventType et, ErrorCode errorCode)
 		{
 			switch (et)
 			{
@@ -108,7 +109,7 @@ namespace RenderHeads.Media.AVProVideo.Demos
 			if (!_useFading)
 			{
 				// Load the video
-				if (!_mediaPlayer.OpenVideoFromFile(_nextVideoLocation, _nextVideoPath))
+				if (!_mediaPlayer.OpenVideoFromFile(_nextVideoLocation, _nextVideoPath, _mediaPlayer.m_AutoStart))
 				{
 					Debug.LogError("Failed to open video!");
 				}
@@ -144,7 +145,7 @@ namespace RenderHeads.Media.AVProVideo.Demos
 			// Load the video
 			if (Application.isPlaying)
 			{
-				if (!_mediaPlayer.OpenVideoFromFile(_nextVideoLocation, _nextVideoPath))
+				if (!_mediaPlayer.OpenVideoFromFile(_nextVideoLocation, _nextVideoPath, _mediaPlayer.m_AutoStart))
 				{
 					Debug.LogError("Failed to open video!");
 				}
@@ -198,8 +199,8 @@ namespace RenderHeads.Media.AVProVideo.Demos
 			{
 				// Display properties
 				GUILayout.Label("Loaded: " + _mediaPlayer.m_VideoPath);
-				GUILayout.Label("Size: " + _width + "x" + _height + "   Duration: " + Helper.GetTimeString(_duration));
-				GUILayout.Label("Updates: " + _mediaPlayer.TextureProducer.GetTextureFrameCount() + "    Rate: " + _mediaPlayer.Info.GetVideoPlaybackRate().ToString("F1"));
+				GUILayout.Label(string.Format("Size: {0}x{1} FPS: {3} Duration: {2}ms", _width, _height, _mediaPlayer.Info.GetDurationMs(), _mediaPlayer.Info.GetVideoFrameRate().ToString("F2")));
+				GUILayout.Label("Updates: " + _mediaPlayer.TextureProducer.GetTextureFrameCount() + "    Rate: " + _mediaPlayer.Info.GetVideoDisplayRate().ToString("F1"));
 
 				GUILayout.BeginHorizontal();
 
@@ -265,7 +266,7 @@ namespace RenderHeads.Media.AVProVideo.Demos
 			int newSelection = GUILayout.SelectionGrid(-1, _filenames, 3);
 			if (newSelection >= 0)
 			{
-				LoadVideo(_filenames[newSelection]);
+				LoadVideo(System.IO.Path.Combine(_folder, _filenames[newSelection]));
 			}
 
 			GUILayout.Space(8f);

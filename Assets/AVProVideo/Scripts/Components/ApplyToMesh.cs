@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 
 //-----------------------------------------------------------------------------
 // Copyright 2015-2016 RenderHeads Ltd.  All rights reserverd.
@@ -10,11 +9,26 @@ namespace RenderHeads.Media.AVProVideo
 	[AddComponentMenu("AVPro Video/Apply To Mesh")]
 	public class ApplyToMesh : MonoBehaviour 
 	{
+		// TODO: add specific material / material index to target in the mesh if there are multiple materials
+		public Vector2 _offset = Vector2.zero;
+		public Vector2 _scale = Vector2.one;
 		public MeshRenderer _mesh;
 		public MediaPlayer _media;
 		public Texture2D _defaultTexture;
+		private static int _propStereo;
+		private static int _propAlphaPack;
 
-		void Update()
+		void Awake()
+		{
+			if (_propStereo == 0 || _propAlphaPack == 0)
+			{
+				_propStereo = Shader.PropertyToID("Stereo");
+				_propAlphaPack = Shader.PropertyToID("AlphaPack");
+			}
+		}
+
+		// We do a LateUpdate() to allow for any changes in the texture that may have happened in Update()
+		void LateUpdate()
 		{
 			bool applied = false;
 			if (_media != null && _media.TextureProducer != null)
@@ -35,22 +49,44 @@ namespace RenderHeads.Media.AVProVideo
 		
 		private void ApplyMapping(Texture texture, bool requiresYFlip)
 		{
-			if (_mesh != null)
+			if (_mesh != null && _mesh.materials != null)
 			{
-				Vector2 scale = Vector2.one;
-				Vector2 offset = Vector2.zero;
-				if (requiresYFlip)
-				{
-					scale = new Vector2(1.0f, -1.0f);
-					offset = new Vector3(0.0f, 1.0f);
-				}
-
 				for (int i = 0; i < _mesh.materials.Length; i++)
 				{
 					Material mat = _mesh.materials[i];
-					mat.mainTexture = texture;
-					mat.mainTextureScale = scale;
-					mat.mainTextureOffset = offset;
+					if( mat != null )
+					{
+						mat.mainTexture = texture;
+
+						if (texture != null )
+						{
+							if (requiresYFlip)
+							{
+								mat.mainTextureScale = new Vector2(_scale.x, -_scale.y);
+								mat.mainTextureOffset = Vector2.up + _offset;
+							}
+							else
+							{
+								mat.mainTextureScale = _scale;
+								mat.mainTextureOffset = _offset;
+							}
+						}
+
+						
+						if (_media != null)
+						{
+							// Apply changes for stereo videos
+							if (mat.HasProperty(_propStereo))
+							{
+								Helper.SetupStereoMaterial(mat, _media.m_StereoPacking, _media.m_DisplayDebugStereoColorTint);
+							}
+							// Apply changes for alpha videos
+							if (mat.HasProperty(_propAlphaPack))
+							{
+								Helper.SetupAlphaPackedMaterial(mat, _media.m_AlphaPacking);
+							}
+						}
+					}
 				}
 			}
 		}
@@ -68,7 +104,7 @@ namespace RenderHeads.Media.AVProVideo
 			
 			if (_mesh != null)
 			{
-				Update();
+				LateUpdate();
 			}
 		}
 		

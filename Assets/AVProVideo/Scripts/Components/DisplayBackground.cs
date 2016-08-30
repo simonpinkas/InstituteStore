@@ -1,5 +1,4 @@
 using UnityEngine;
-using System.Collections;
 
 //-----------------------------------------------------------------------------
 // Copyright 2015-2016 RenderHeads Ltd.  All rights reserverd.

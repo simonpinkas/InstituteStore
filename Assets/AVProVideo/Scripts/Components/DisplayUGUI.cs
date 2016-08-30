@@ -1,9 +1,13 @@
 #if UNITY_4_6 || UNITY_4_7 || UNITY_4_8 || UNITY_5
-#define UNITY_FEATURE_UGUI
+	#define UNITY_FEATURE_UGUI
+#endif
+
+// Some older versions of Unity don't set the _TexelSize variable from uGUI so we need to set this manually
+#if (!UNITY_5 || UNITY_5_0 || UNITY_5_1 || UNITY_5_2 || UNITY_5_3_0 || UNITY_5_3_1 || UNITY_5_3_2 || UNITY_5_3_3)
+	#define UNITY_UGUI_NOSET_TEXELSIZE
 #endif
 
 using System.Collections.Generic;
-using UnityEngine.Serialization;
 #if UNITY_FEATURE_UGUI
 using UnityEngine;
 using UnityEngine.UI;
@@ -35,13 +39,28 @@ namespace RenderHeads.Media.AVProVideo
 		[SerializeField]
 		public Texture _defaultTexture;
 
-		private Texture _currentTexture;
-
 		private int _lastWidth;
 		private int _lastHeight;
+		private bool _flipY;
+		private Texture _lastTexture;
+		private static int _propAlphaPack;
+		private static int	_propVertScale;
+#if  UNITY_UGUI_NOSET_TEXELSIZE
+		private static int _propMainTextureTexelSize;
+#endif
 
-//		protected DisplayUGUI()
-//		{ }
+		protected override void Awake()
+		{
+			if (_propAlphaPack == 0)
+			{
+				_propAlphaPack = Shader.PropertyToID("AlphaPack");
+				_propVertScale = Shader.PropertyToID("_VertScale");
+#if UNITY_UGUI_NOSET_TEXELSIZE
+				_propMainTextureTexelSize = Shader.PropertyToID("_MainTex_TexelSize");
+#endif
+			}
+			base.Awake();
+		}
 
 		/// <summary>
 		/// Returns the texture used to draw this Graphic.
@@ -75,34 +94,59 @@ namespace RenderHeads.Media.AVProVideo
 			return (_mediaPlayer != null && _mediaPlayer.TextureProducer != null && _mediaPlayer.TextureProducer.GetTexture() != null);
 		}
 
-		void Update()
+		// We do a LateUpdate() to allow for any changes in the texture that may have happened in Update()
+		void LateUpdate()
 		{
-			if (mainTexture == null)
-			{
-				// When the texture becomes null we need to mark the material as dirty otherwise the editor can crash
-				if (mainTexture != _currentTexture)
-				{
-					_currentTexture = mainTexture;
-					SetMaterialDirty();
-				}
-				return;
-			}
-
-			_currentTexture = mainTexture;
-
 			if (_setNativeSize)
 			{
 				SetNativeSize();
 			}
+
+			if (_lastTexture != mainTexture)
+			{
+				_lastTexture = mainTexture;
+				SetVerticesDirty();
+			}
+
 			if (HasValidTexture())
 			{
-				if (mainTexture.width != _lastWidth || mainTexture.height != _lastHeight)
+				if (mainTexture != null)
 				{
-					_lastWidth = mainTexture.width;
-					_lastHeight = mainTexture.height;
-					SetVerticesDirty();
+					if (mainTexture.width != _lastWidth || mainTexture.height != _lastHeight)
+					{
+						_lastWidth = mainTexture.width;
+						_lastHeight = mainTexture.height;
+						SetVerticesDirty();
+					}
 				}
 			}
+
+			
+			if (material != null && _mediaPlayer != null)
+			{
+				// Apply changes for alpha videos
+				if (material.HasProperty(_propAlphaPack))
+				{
+					Helper.SetupAlphaPackedMaterial(material, _mediaPlayer.m_AlphaPacking);
+
+					if (_flipY)
+					{
+						material.SetFloat(_propVertScale, -1f);
+					}
+					else
+					{
+						material.SetFloat(_propVertScale, 1f);
+					}
+
+#if UNITY_UGUI_NOSET_TEXELSIZE
+					if (mainTexture != null)
+					{
+						material.SetVector(_propMainTextureTexelSize, new Vector4(1.0f / mainTexture.width, 1.0f / mainTexture.height, mainTexture.width, mainTexture.height));
+					}
+#endif
+				}
+			}
+
 
 			SetMaterialDirty();
 		}
@@ -118,14 +162,12 @@ namespace RenderHeads.Media.AVProVideo
 			}
 			set
 			{
-				if (_mediaPlayer == value)
+				if (_mediaPlayer != value)
 				{
-					return;
+					_mediaPlayer = value;
+					//SetVerticesDirty();
+					SetMaterialDirty();
 				}
-
-				_mediaPlayer = value;
-				//SetVerticesDirty();
-				SetMaterialDirty();
 			}
 		}
 
@@ -161,6 +203,19 @@ namespace RenderHeads.Media.AVProVideo
 			{
 				int w = Mathf.RoundToInt(tex.width * uvRect.width);
 				int h = Mathf.RoundToInt(tex.height * uvRect.height);
+
+				if (_mediaPlayer != null)
+				{
+					if (_mediaPlayer.m_AlphaPacking == AlphaPacking.LeftRight)
+					{
+						w /= 2;
+					}
+					else if (_mediaPlayer.m_AlphaPacking == AlphaPacking.TopBottom)
+					{
+						h /= 2;
+					}
+				}
+
 				rectTransform.anchorMax = rectTransform.anchorMin;
 				rectTransform.sizeDelta = new Vector2(w, h);
 			}
@@ -194,6 +249,7 @@ namespace RenderHeads.Media.AVProVideo
 			List<UIVertex> aVerts = new List<UIVertex>();
 			_OnFillVBO( aVerts );
 
+			// TODO: cache these indices since they never change?
 			List<int> aIndicies = new List<int>( new int[]{ 0, 1, 2, 2, 3, 0 } );
 			vh.AddUIVertexStream( aVerts, aIndicies );
 		}
@@ -207,10 +263,10 @@ namespace RenderHeads.Media.AVProVideo
 
 		private void _OnFillVBO(List<UIVertex> vbo)
 		{
-			bool flipY = false;
+			_flipY = false;
 			if (HasValidTexture())
 			{
-				flipY = _mediaPlayer.TextureProducer.RequiresVerticalFlip();
+				_flipY = _mediaPlayer.TextureProducer.RequiresVerticalFlip();
 			}
 
 			Vector4 v = GetDrawingDimensions(_keepAspectRatio);
@@ -221,7 +277,7 @@ namespace RenderHeads.Media.AVProVideo
 
 			vert.position = new Vector2(v.x, v.y);
 			vert.uv0 = new Vector2(m_UVRect.xMin, m_UVRect.yMin);
-			if (flipY)
+			if (_flipY)
 			{
 				vert.uv0 = new Vector2(m_UVRect.xMin, 1.0f - m_UVRect.yMin);
 			}
@@ -230,7 +286,7 @@ namespace RenderHeads.Media.AVProVideo
 
 			vert.position = new Vector2(v.x, v.w);
 			vert.uv0 = new Vector2(m_UVRect.xMin, m_UVRect.yMax);
-			if (flipY)
+			if (_flipY)
 			{
 				vert.uv0 = new Vector2(m_UVRect.xMin, 1.0f - m_UVRect.yMax);
 			}
@@ -239,7 +295,7 @@ namespace RenderHeads.Media.AVProVideo
 
 			vert.position = new Vector2(v.z, v.w);
 			vert.uv0 = new Vector2(m_UVRect.xMax, m_UVRect.yMax);
-			if (flipY)
+			if (_flipY)
 			{
 				vert.uv0 = new Vector2(m_UVRect.xMax, 1.0f - m_UVRect.yMax);
 			}
@@ -248,7 +304,7 @@ namespace RenderHeads.Media.AVProVideo
 
 			vert.position = new Vector2(v.z, v.y);
 			vert.uv0 = new Vector2(m_UVRect.xMax, m_UVRect.yMin);
-			if (flipY)
+			if (_flipY)
 			{
 				vert.uv0 = new Vector2(m_UVRect.xMax, 1.0f - m_UVRect.yMin);
 			}
@@ -261,10 +317,22 @@ namespace RenderHeads.Media.AVProVideo
 		{
 			Vector4 returnSize = Vector4.zero;
 
-			if( mainTexture )
+			if (mainTexture != null)
 			{
 				var padding = Vector4.zero;
 				var textureSize = new Vector2(mainTexture.width, mainTexture.height);
+
+				if (_mediaPlayer != null)
+				{
+					if (_mediaPlayer.m_AlphaPacking == AlphaPacking.LeftRight)
+					{
+						textureSize.x /= 2f;
+					}
+					else if (_mediaPlayer.m_AlphaPacking == AlphaPacking.TopBottom)
+					{
+						textureSize.y /= 2f;
+					}
+				}
 				
 				Rect r = GetPixelAdjustedRect();
 //				Debug.Log(string.Format("r:{2}, textureSize:{0}, padding:{1}", textureSize, padding, r));
@@ -300,7 +368,7 @@ namespace RenderHeads.Media.AVProVideo
 										  r.y + r.height * size.y,
 										  r.x + r.width * size.z,
 										  r.y + r.height * size.w  );
-				
+
 			}
 
 			return returnSize;

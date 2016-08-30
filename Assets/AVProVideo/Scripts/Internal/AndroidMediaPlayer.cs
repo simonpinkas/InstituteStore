@@ -1,7 +1,12 @@
 ﻿#if UNITY_ANDROID
+#if UNITY_5
+	#if !UNITY_5_0 && !UNITY_5_1
+		#define AVPROVIDEO_ISSUEPLUGINEVENT_UNITY52
+	#endif
+#endif
+
 using UnityEngine;
 using System;
-using System.Collections;
 using System.Runtime.InteropServices;
 
 //-----------------------------------------------------------------------------
@@ -10,6 +15,7 @@ using System.Runtime.InteropServices;
 
 namespace RenderHeads.Media.AVProVideo
 {
+	// TODO: seal this class
 	public class AndroidMediaPlayer : BaseMediaPlayer
 	{
 		[DllImport ("AVProLocal")]
@@ -20,15 +26,18 @@ namespace RenderHeads.Media.AVProVideo
 			Nop,
 			PlayerSetup,
 			PlayerUpdate,
+			PlayerDestroy,
 		}
-
-
 
         private static AndroidJavaObject	s_ActivityContext	= null;
         private static bool					s_bInitialised		= false;
 
 		private static string				s_Version = "Plug-in not yet initialised";
-		
+
+#if AVPROVIDEO_ISSUEPLUGINEVENT_UNITY52
+		private static System.IntPtr _nativeFunction_RenderEvent;
+#endif
+
 		private AndroidJavaObject			m_Video;
 		private Texture2D					m_Texture;
         private int                         m_TextureHandle;
@@ -61,8 +70,13 @@ namespace RenderHeads.Media.AVProVideo
 				{
 					s_Version = videoClass.CallStatic<string>("GetPluginVersion");
 
-					Debug.Log("Plugin version : " + s_Version);
-					//Debug.Log("MT rendering: " + SystemInfo.graphicsMultiThreaded);
+#if AVPROVIDEO_ISSUEPLUGINEVENT_UNITY52
+					_nativeFunction_RenderEvent = GetRenderEventFunc();
+#else
+					// Calling this native function cause the .SO library to become loaded
+					// This is important for Unity < 5.2.0 where GL.IssuePluginEvent works differently
+					GetRenderEventFunc();
+#endif
 				}
 			}
 		}
@@ -76,16 +90,17 @@ namespace RenderHeads.Media.AVProVideo
 			{
 				case AVPPluginEvent.PlayerSetup:
 				case AVPPluginEvent.PlayerUpdate:
+				case AVPPluginEvent.PlayerDestroy:
 					{
 						eventId |= param & 0xff;
 					}
 					break;
 			}
 
-#if UNITY_5 && !UNITY_5_0 && !UNITY_5_1
-				GL.IssuePluginEvent(GetRenderEventFunc(), eventId);
+#if AVPROVIDEO_ISSUEPLUGINEVENT_UNITY52
+			GL.IssuePluginEvent(_nativeFunction_RenderEvent, eventId);
 #else
-				GL.IssuePluginEvent(eventId);
+			GL.IssuePluginEvent(eventId);
 #endif
 		}
 
@@ -117,9 +132,9 @@ namespace RenderHeads.Media.AVProVideo
 
 			if( m_Video != null )
 			{
-				m_DurationMs = 0.0f;
-				m_Width = 0;
-				m_Height = 0;
+#if UNITY_5
+				Debug.Assert(m_Width == 0 && m_Height == 0 && m_DurationMs == 0.0f);
+#endif
 
 				// Load video file
 				Debug.Log( "OpenVideoFromFile videoFilename: " + path );
@@ -131,7 +146,7 @@ namespace RenderHeads.Media.AVProVideo
 
         public override void CloseVideo()
         {
-            if (m_Texture != null)
+			if (m_Texture != null)
             {
                 Texture2D.Destroy(m_Texture);
                 m_Texture = null;
@@ -142,8 +157,10 @@ namespace RenderHeads.Media.AVProVideo
             m_Width = 0;
             m_Height = 0;
 
+			_lastError = ErrorCode.None;
+
             m_Video.Call("CloseVideo");
-        }
+		}
 
         public override void SetLooping( bool bLooping )
 		{
@@ -246,12 +263,38 @@ namespace RenderHeads.Media.AVProVideo
 			}
 		}
 
+		public override void SeekFast(float timeMs)
+		{
+			if (m_Video != null)
+			{
+				m_Video.Call("Seek", Mathf.FloorToInt(timeMs));
+			}
+		}
+
 		public override float GetCurrentTimeMs()
 		{
 			float result = 0.0f;
 			if (m_Video != null)
 			{
 				result = (float)m_Video.Call<long>("GetCurrentTimeMs");
+			}
+			return result;
+		}
+
+		public override void SetPlaybackRate(float rate)
+		{
+			if (m_Video != null)
+			{
+				m_Video.Call("SetPlaybackRate", rate);
+			}
+		}
+
+		public override float GetPlaybackRate()
+		{
+			float result = 0.0f;
+			if (m_Video != null)
+			{
+				result = m_Video.Call<float>("GetPlaybackRate");
 			}
 			return result;
 		}
@@ -271,12 +314,32 @@ namespace RenderHeads.Media.AVProVideo
 			return m_Height;
 		}
 
-		public override float GetVideoPlaybackRate()
+		public override float GetVideoFrameRate()
+		{
+			float result = 0.0f;
+			if( m_Video != null )
+			{
+				result = m_Video.Call<int>("GetSourceVideoFrameRate");
+			}
+			return result;
+		}
+
+		public override float GetBufferingProgress()
+		{
+			float result = 0.0f;
+			if( m_Video != null )
+			{
+				result = m_Video.Call<float>("GetBufferingProgressPercent") * 0.01f;
+			}
+			return result;
+		}
+
+		public override float GetVideoDisplayRate()
 		{
 			float result = 0.0f;
 			if (m_Video != null)
 			{
-				result = m_Video.Call<float>("GetPlaybackRate");
+				result = m_Video.Call<float>("GetDisplayRate");
 			}
 			return result;
 		}
@@ -321,10 +384,24 @@ namespace RenderHeads.Media.AVProVideo
 			return result;
 		}
 
+		public override bool IsBuffering()
+		{
+			bool result = false;
+			if (m_Video != null)
+			{
+				result = m_Video.Call<bool>("IsBuffering");
+			}
+			return result;
+		}
 
 		public override Texture GetTexture()
 		{
-			return m_Texture;
+			Texture result = null;
+			if (GetTextureFrameCount() > 0)
+			{
+				result = m_Texture;
+			}
+			return result;
 		}
 
 		public override int GetTextureFrameCount()
@@ -371,22 +448,48 @@ namespace RenderHeads.Media.AVProVideo
 		public override float GetVolume()
 		{
 			float result = 0.0f;
-			if (m_Video != null)
+			if( m_Video != null )
 			{
 				result = m_Video.Call<float>("GetVolume");
 			}
 			return result;
 		}
 
+		public override int GetAudioTrackCount()
+		{
+			int result = 0;
+			if( m_Video != null )
+			{
+				result = m_Video.Call<int>("GetNumberAudioTracks");
+			}
+			return result;
+		}
+
+		public override int GetCurrentAudioTrack()
+		{
+			int result = 0;
+			if( m_Video != null )
+			{
+				result = m_Video.Call<int>("GetCurrentAudioTrackIndex");
+			}
+			return result;
+		}
+
+		public override void SetAudioTrack( int index )
+		{
+			if( m_Video != null )
+			{
+				m_Video.Call("SetAudioTrack", index);
+			}
+		}
 
 		public override void Render()
 		{
 			if (m_Video != null)
 			{
-				GL.InvalidateState();
+				//GL.InvalidateState();
 				AndroidMediaPlayer.IssuePluginEvent( AVPPluginEvent.PlayerUpdate, m_iPlayerIndex );
-				GL.InvalidateState();
-
+				//GL.InvalidateState();
 
 				// Check if we can create the texture
                 // Scan for a change in resolution
@@ -422,7 +525,10 @@ namespace RenderHeads.Media.AVProVideo
 //						Debug.Log("Video Dimensions: " + m_Width + " x " + m_Height);
 
 						m_Texture = Texture2D.CreateExternalTexture(m_Width, m_Height, TextureFormat.RGBA32, false, false, new System.IntPtr(textureHandle));
-						m_Texture.wrapMode = TextureWrapMode.Clamp;
+						if (m_Texture != null)
+						{
+							ApplyTextureProperties(m_Texture);
+						}
 						Debug.Log("Texture ID: " + textureHandle);
 					}
 				}
@@ -437,15 +543,23 @@ namespace RenderHeads.Media.AVProVideo
 
 		public override void Update()
 		{
+			if (m_Video != null)
+			{
+				_lastError = (ErrorCode)( m_Video.Call<int>("GetLastErrorCode") );
+			}				
 		}
 
 
 		public override void Dispose()
 		{
 			Debug.LogError("DISPOSE");
+
+			// Deinitialise player (replaces call directly as GL textures are involved)
+			AndroidMediaPlayer.IssuePluginEvent( AVPPluginEvent.PlayerDestroy, m_iPlayerIndex );
+
 			if (m_Video != null)
 			{
-				m_Video.Call("Deinitialise");
+				m_Video.Call("SetDeinitialiseFlagged");
 
 				m_Video.Dispose();
 				m_Video = null;

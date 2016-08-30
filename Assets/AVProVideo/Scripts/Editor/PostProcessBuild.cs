@@ -3,7 +3,7 @@
 		#define AVPROVIDEO_UNITY_SUPPORTS_PLISTEDIT
 	#endif
 #endif
-using System.Collections;
+
 using System.IO;
 using UnityEngine;
 using UnityEditor;

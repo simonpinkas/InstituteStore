@@ -28,25 +28,14 @@ namespace RenderHeads.Media.AVProVideo.Demos
 		public Toggle		_AutoStartToggle;
 		public Toggle		_MuteToggle;
 
+		public string _folder = "AVProVideoDemos/";
 		public string[] _videoFiles = { "BigBuckBunny_720p30.mp4", "SampleSphere.mp4" };
 
-#if false
-		public void OnOpenVideoFile()
- 		{
-			_mediaPlayer.OpenVideoFromFile();
-
-			RemoveOpenVideoButton();
-
-//			SetButtonEnabled( "PlayButton", !_mediaPlayer.m_AutoStart );
-//			SetButtonEnabled( "PauseButton", _mediaPlayer.m_AutoStart );
-		}
-#else
 		private int _VideoIndex = 0;
 
 		public void OnOpenVideoFile()
  		{
-			_mediaPlayer.m_VideoPath = string.Empty;
-			_mediaPlayer.m_VideoPath = _videoFiles[_VideoIndex];
+			_mediaPlayer.m_VideoPath = System.IO.Path.Combine(_folder, _videoFiles[_VideoIndex]);
 			_VideoIndex = (_VideoIndex + 1) % (_videoFiles.Length);
 			if (string.IsNullOrEmpty(_mediaPlayer.m_VideoPath))
 			{
@@ -55,12 +44,11 @@ namespace RenderHeads.Media.AVProVideo.Demos
 			}
 			else
 			{
-				_mediaPlayer.OpenVideoFromFile(MediaPlayer.FileLocation.RelativeToStreamingAssetsFolder, _mediaPlayer.m_VideoPath);
+				_mediaPlayer.OpenVideoFromFile(MediaPlayer.FileLocation.RelativeToStreamingAssetsFolder, _mediaPlayer.m_VideoPath, _AutoStartToggle.isOn);
 //				SetButtonEnabled( "PlayButton", !_mediaPlayer.m_AutoStart );
 //				SetButtonEnabled( "PauseButton", _mediaPlayer.m_AutoStart );
 			}
 		}
-#endif
 
 		public void OnAutoStartChange()
 		{
@@ -215,7 +203,7 @@ namespace RenderHeads.Media.AVProVideo.Demos
 		}
 
 		// Callback function to handle events
-		public void OnVideoEvent(MediaPlayer mp, MediaPlayerEvent.EventType et)
+		public void OnVideoEvent(MediaPlayer mp, MediaPlayerEvent.EventType et, ErrorCode errorCode)
 		{
 			switch (et)
 			{

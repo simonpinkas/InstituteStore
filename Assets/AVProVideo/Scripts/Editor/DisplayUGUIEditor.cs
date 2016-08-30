@@ -5,7 +5,6 @@
 using UnityEngine;
 using UnityEditor;
 #if UNITY_FEATURE_UGUI
-using UnityEngine.UI;
 using UnityEditor.UI;
 
 //-----------------------------------------------------------------------------

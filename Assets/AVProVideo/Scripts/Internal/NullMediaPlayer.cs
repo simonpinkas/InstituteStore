@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 //-----------------------------------------------------------------------------
 // Copyright 2015-2016 RenderHeads Ltd.  All rights reserverd.
@@ -10,13 +9,14 @@ namespace RenderHeads.Media.AVProVideo
 	/// <summary>
 	/// This media player fakes video playback for platforms that aren't supported
 	/// </summary>
-	public class NullMediaPlayer : BaseMediaPlayer
+	public sealed class NullMediaPlayer : BaseMediaPlayer
 	{
 		private bool		_isPlaying = false;
 		private bool		_isPaused = false;
 		private float		_currentTime = 0.0f;
 //		private bool		_audioMuted = false;
 		private float		_volume = 0.0f;
+		private float		_playbackRate = 1.0f;
 		private bool		_bLoop;
 
 		private int			_Width = 256;
@@ -126,6 +126,11 @@ namespace RenderHeads.Media.AVProVideo
 			return _isPlaying && (_currentTime >= GetDurationMs());
 		}
 
+		public override bool IsBuffering()
+		{
+			return false;
+		}
+
 		public override float GetDurationMs()
 		{
 			return 10.0f * 1000.0f;
@@ -141,7 +146,7 @@ namespace RenderHeads.Media.AVProVideo
 			return _height;
 		}
 
-		public override float GetVideoPlaybackRate()
+		public override float GetVideoDisplayRate()
 		{
 			return FrameRate;
 		}
@@ -172,9 +177,29 @@ namespace RenderHeads.Media.AVProVideo
 			_currentTime = timeMs;
 		}
 
+		public override void SeekFast(float timeMs)
+		{
+			_currentTime = timeMs;
+		}
+
 		public override float GetCurrentTimeMs()
 		{
 			return _currentTime;
+		}
+
+		public override void SetPlaybackRate(float rate)
+		{
+			_playbackRate = rate;
+		}
+
+		public override float GetPlaybackRate()
+		{
+			return _playbackRate;
+		}
+
+		public override float GetBufferingProgress()
+		{
+			return 0f;
 		}
 
 		public override void MuteAudio(bool bMuted)
@@ -195,6 +220,25 @@ namespace RenderHeads.Media.AVProVideo
 		public override float GetVolume()
 		{
 			return _volume;
+		}
+
+		public override int GetAudioTrackCount()
+		{
+			return 0;
+		}
+
+		public override int GetCurrentAudioTrack()
+		{
+			return 0;
+		}
+
+		public override void SetAudioTrack( int index )
+		{
+		}
+
+		public override float GetVideoFrameRate()
+		{
+			return 0.0f;
 		}
 
 		public override void Update()

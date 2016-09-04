@@ -30,7 +30,7 @@ public class MediaPlayerController : MonoBehaviour {
             case "AvocadoProduct":
                 if (mp.Control.CanPlay() == true)
                 {
-                    mp.Control.SeekFast(currentSceneTimeAvocado);
+                    //mp.Control.SeekFast(currentSceneTimeAvocado);
                     mp.Control.Play();
                 }
                 break;

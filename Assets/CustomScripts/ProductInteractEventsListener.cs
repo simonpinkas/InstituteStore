@@ -1,12 +1,4 @@
-﻿/// <summary>
-/// This script is to be attached to Product Gameobjects and controls mainly scene transitions, 
-/// with different 'Transition In/Out' behaviors per Product Type.
-/// 
-/// The TransitionPeriphery() function is used in all product transitions for transitioning
-/// elements in the surrounding areas outside the Vive area boundaries.
-/// </summary>
-
-    using UnityEngine;
+﻿    using UnityEngine;
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
@@ -78,7 +70,7 @@
             {
                 case ProductType.AvocadoProduct:
                     retailPeripheryEnabler.IntervalDisableTargets();
-                    fogFader.FadeFogOut(1.5f);
+                    Invoke("FadeFogOut", 1.5f);
                     mediaPlayerController.PlayScene("AvocadoProduct");
                     break;
                 case ProductType.CarVisorProduct:
@@ -102,6 +94,11 @@
             }
         }
 
+        void FadeFogOut()
+        {
+            fogFader.FadeFogOut(1.5f);
+        }
+
 
         //Ungrabbed
         void DoInteractableObjectUngrabbed(object sender, InteractableObjectEventArgs e)
@@ -112,6 +109,7 @@
                 case ProductType.AvocadoProduct:
                     retailPeripheryEnabler.IntervalEnableTargets();
                     fogFader.FadeFogIn(1.5f);
+                    mediaPlayerController.PauseScene("AvocadoProduct");
                     break;
                 case ProductType.CarVisorProduct:
                     retailPeripheryEnabler.IntervalEnableTargets();

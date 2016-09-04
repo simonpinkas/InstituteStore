@@ -8,18 +8,20 @@ Material:
   m_PrefabInternal: {fileID: 0}
   m_Name: BoxexBBunchLowPolyDiffuseMap
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
-  m_ShaderKeywords: S_SPECULAR_METALLIC
-  m_LightmapFlags: 5
-  m_CustomRenderQueue: -1
+  m_ShaderKeywords: S_SPECULAR_METALLIC _ALPHAPREMULTIPLY_ON _EMISSION _NORMALMAP
+    _SMOOTHNESS_TEXTURE_ALBEDO_CHANNEL_A
+  m_LightmapFlags: 1
+  m_CustomRenderQueue: 3000
   stringTagMap:
     OriginalShader: Standard
+    RenderType: Transparent
   m_SavedProperties:
     serializedVersion: 2
     m_TexEnvs:
     - first:
         name: _BumpMap
       second:
-        m_Texture: {fileID: 0}
+        m_Texture: {fileID: 2800000, guid: 3a1427b549d24d04daced88d821990df, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - first:
@@ -49,7 +51,7 @@ Material:
     - first:
         name: _MainTex
       second:
-        m_Texture: {fileID: 2800000, guid: 22032685951714c40835de7154428023, type: 3}
+        m_Texture: {fileID: 2800000, guid: 3f20818a95ba60c49bd5316c8a718dce, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - first:
@@ -97,13 +99,13 @@ Material:
       second: 1
     - first:
         name: _DstBlend
-      second: 0
+      second: 10
     - first:
         name: _FogMultiplier
       second: 1
     - first:
         name: _GlossMapScale
-      second: 1
+      second: 0.65
     - first:
         name: _Glossiness
       second: 0
@@ -112,10 +114,10 @@ Material:
       second: 1
     - first:
         name: _Metallic
-      second: 0
+      second: 0.424
     - first:
         name: _Mode
-      second: 0
+      second: 3
     - first:
         name: _OcclusionStrength
       second: 1
@@ -136,7 +138,7 @@ Material:
       second: 0.02
     - first:
         name: _SmoothnessTextureChannel
-      second: 0
+      second: 1
     - first:
         name: _SpecularHighlights
       second: 1
@@ -151,7 +153,7 @@ Material:
       second: 0
     - first:
         name: _ZWrite
-      second: 1
+      second: 0
     - first:
         name: g_bReceiveShadows
       second: 0
@@ -182,7 +184,7 @@ Material:
     m_Colors:
     - first:
         name: _Color
-      second: {r: 0.588, g: 0.588, b: 0.588, a: 1}
+      second: {r: 1, g: 1, b: 1, a: 1}
     - first:
         name: _EmissionColor
       second: {r: 0, g: 0, b: 0, a: 1}

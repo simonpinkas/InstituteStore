@@ -129,7 +129,7 @@ Material:
       second: 0.9
     - first:
         name: _ReflectionIntensity
-      second: 0.3
+      second: 0.428
     - first:
         name: _Refraction
       second: 0.14
@@ -141,7 +141,7 @@ Material:
       second: 1
     - first:
         name: _Transparency
-      second: 0.675
+      second: 0.969
     - first:
         name: _UVSec
       second: 0

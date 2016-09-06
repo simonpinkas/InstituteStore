@@ -3,69 +3,50 @@ using System.Collections;
 
 public class FogFader : MonoBehaviour
 {
-    private float fadeInDurationSecs;
-    private float fadeOutDurationSecs;
+    public float fadeOutStartDelayInSecs;
+    public float fadeInStartDelayInSecs;
 
     private float onStartDensity;
     private float currentDensity;
-
-    private float fadeInDelaySecs;
-    private float fadeOutDelaySecs;
-
+    
     void Start()
     {
-    onStartDensity = RenderSettings.fogDensity;
-    currentDensity = RenderSettings.fogDensity;
+        onStartDensity = RenderSettings.fogDensity;
+        currentDensity = RenderSettings.fogDensity;
     }
-
-//Delete Update() when done with script
+    
     void Update()
     {
+        //For testing
+        /*
         if (Input.GetKeyUp(KeyCode.T))
         {
-            FadeFogOut(fadeOutDurationSecs);
+            FadeFogOut(2.5f);
         }
         if (Input.GetKeyUp(KeyCode.F))
         {
-            FadeFogIn(fadeOutDurationSecs);
+            FadeFogIn(4.0f);
         }
+        */
     }
+    
+    //Methods for fading out
 
-    public void FadeFogOut(float fadeDurationSecsArg)
+    public void FadeFogOut(float fadeOutDurationInSecsArg)
     {
-        print("FadeFogOut() Duration:" + fadeDurationSecsArg.ToString());
-        fadeOutDurationSecs = fadeDurationSecsArg;
-        StopCoroutine("FadeOut");
+        //print("FadeFogOut() Duration:" + fadeDurationSecsArg.ToString());
+        
         StopCoroutine("FadeIn");
-        StartCoroutine(FadeOut(fadeOutDurationSecs));
-    }
-
-    public void FadeFogOutDelayed(float fadeDurationSecsArg, float delayTimeSecsArg)
-    {
-        fadeOutDurationSecs = fadeDurationSecsArg;
-        fadeOutDelaySecs = delayTimeSecsArg;
-        Invoke("FadeFogOut", fadeOutDelaySecs);
-    }
-
-    public void FadeFogIn(float fadeDurationSecsArg)
-    {
-        fadeOutDurationSecs = fadeDurationSecsArg;
-        StopCoroutine("FadeIn");
+        StopCoroutine("FadeOutDelayed");
+        StopCoroutine("FadeInDelayed");
         StopCoroutine("FadeOut");
-        StartCoroutine(FadeIn(fadeOutDurationSecs));
-    }
 
-    public void FadeFogInDelayed(float fadeDurationSecsArg, float delayTimeSecsArg)
-    {
-        fadeInDurationSecs = fadeDurationSecsArg;
-        fadeInDelaySecs = delayTimeSecsArg;
-        Invoke("FadeFogIn", fadeInDelaySecs);
+        StartCoroutine("FadeOut" ,fadeOutDurationInSecsArg);
     }
-
-    IEnumerator FadeOut(float fadeOutDurationSeconds)
+    IEnumerator FadeOut(float fadeOutDurationInSecsArg)
     {
         currentDensity = RenderSettings.fogDensity;
-        for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeOutDurationSeconds)
+        for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeOutDurationInSecsArg)
         {
             RenderSettings.fogDensity = Mathf.Lerp(onStartDensity, 0.0f, t);
             Debug.Log("FadeOut RenderSettings.fogDensity:" + RenderSettings.fogDensity);
@@ -73,14 +54,67 @@ public class FogFader : MonoBehaviour
         }
     }
 
-    IEnumerator FadeIn(float fadeInDurationSeconds)
+    public void FadeFogOutDelayed(float fadeOutDurationOutSecsArg, float fadeOutStartDelayInSecsArg)
+    {
+
+        fadeOutStartDelayInSecs = fadeOutStartDelayInSecsArg;
+        StopCoroutine("FadeIn");
+        StopCoroutine("FadeOut");
+        StartCoroutine("FadeIn", fadeOutStartDelayInSecs);
+    }
+    IEnumerator FadeOutDelayed(float fadeOutDurationInSecsArg)
+    {
+        yield return new WaitForSeconds(fadeOutStartDelayInSecs);
+        currentDensity = RenderSettings.fogDensity;
+        for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeOutDurationInSecsArg)
+        {
+            RenderSettings.fogDensity = Mathf.Lerp(currentDensity, onStartDensity, t);
+            Debug.Log("FadeIn RenderSettings.fogDensity:" + RenderSettings.fogDensity);
+            yield return null;
+
+        }
+    }
+
+    //Methods for fading in
+
+
+    public void FadeFogIn(float fadeInDurationInSecsArg)
+    {
+        StopCoroutine("FadeIn");
+        StopCoroutine("FadeOut");
+        StartCoroutine("FadeIn", fadeInDurationInSecsArg);
+    }
+    IEnumerator FadeIn(float fadeInDurationInSecsArg)
     {
         currentDensity = RenderSettings.fogDensity;
-        for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeInDurationSeconds)
+        for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeInDurationInSecsArg)
         {
             RenderSettings.fogDensity = Mathf.Lerp(0.0f, onStartDensity, t);
             Debug.Log("FadeIn RenderSettings.fogDensity:" + RenderSettings.fogDensity);
             yield return null;
+
         }
     }
+
+    public void FadeFogInDelayed(float fadeInDurationInSecsArg, float fadeInStartDelayInSecsArg)
+    {
+
+        fadeInStartDelayInSecs = fadeInStartDelayInSecsArg;
+        StopCoroutine("FadeIn");
+        StopCoroutine("FadeOut");
+        StartCoroutine("FadeIn", fadeInStartDelayInSecs);
+    }
+    IEnumerator FadeInDelayed(float fadeInDurationInSecsArg)
+    {
+        yield return new WaitForSeconds(fadeInStartDelayInSecs);
+        currentDensity = RenderSettings.fogDensity;
+        for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeInDurationInSecsArg)
+        {
+            RenderSettings.fogDensity = Mathf.Lerp(currentDensity, onStartDensity, t);
+            Debug.Log("FadeIn RenderSettings.fogDensity:" + RenderSettings.fogDensity);
+            yield return null;
+
+        }
+    }
+    
 }

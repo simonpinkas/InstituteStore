@@ -7,6 +7,7 @@ public class MediaPlayerController : MonoBehaviour {
 
     public MediaPlayer mp;
 
+
     float currentSceneTimeAvocado = 0.0f;
     float currentSceneTimeCarVisor = 0.0f;
     float currentSceneTimeNailPolish = 0.0f;
@@ -30,7 +31,6 @@ public class MediaPlayerController : MonoBehaviour {
             case "AvocadoProduct":
                 if (mp.Control.CanPlay() == true)
                 {
-                    //mp.Control.SeekFast(currentSceneTimeAvocado);
                     mp.Control.Play();
                 }
                 break;

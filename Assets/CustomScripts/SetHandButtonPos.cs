@@ -3,10 +3,10 @@ using System.Collections;
 
 public class SetHandButtonPos : MonoBehaviour {
 
-    public Transform controller;
+    public Transform controllerAttachPoint;
 
-    void Update()
+    void FixedUpdate()
     {   
-        transform.position = controller.position;
+        transform.position = controllerAttachPoint.position;
     }
 }

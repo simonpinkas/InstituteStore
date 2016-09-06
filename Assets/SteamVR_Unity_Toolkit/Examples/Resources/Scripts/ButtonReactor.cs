@@ -15,7 +15,7 @@ public class ButtonReactor : MonoBehaviour
     {
         Debug.Log("Pushed");
 
-       // GameObject newGo = (GameObject)Instantiate(go, dispenseLocation.position, Quaternion.identity);
-       // Destroy(newGo, 10f);
+        GameObject newGo = (GameObject)Instantiate(go, dispenseLocation.position, Quaternion.identity);
+        Destroy(newGo, 10f);
     }
 }

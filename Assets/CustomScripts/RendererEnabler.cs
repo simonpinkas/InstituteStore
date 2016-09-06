@@ -5,7 +5,7 @@ using System.Linq;
 
 public class RendererEnabler : MonoBehaviour
 {
-    [Header("Add Rendererst")]
+    [Header("Add Renderers")]
     public bool fromChildren = true;
     public GameObject fromChildrenOf;
     public bool byTag = false;

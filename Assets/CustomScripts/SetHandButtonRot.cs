@@ -3,7 +3,7 @@ using System.Collections;
 
 public class SetHandButtonRot : MonoBehaviour {
 
-    public Transform controller;
+    public Transform controllerAttachPoint;
     public Transform cameraHead;
     public float tilt = 2.0f;
 
@@ -15,9 +15,9 @@ public class SetHandButtonRot : MonoBehaviour {
         lookAtAnchor = new GameObject();
     }
 
-    void Update()
+    void FixedUpdate()
     {
-        lookAtAnchor.transform.position = controller.position;
+        lookAtAnchor.transform.position = controllerAttachPoint.position;
         lookAtAnchor.transform.LookAt(cameraHead);
 
         transform.eulerAngles = new Vector3(0f, lookAtAnchor.transform.eulerAngles.y, 0f);

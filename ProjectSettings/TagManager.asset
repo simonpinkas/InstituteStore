@@ -8,6 +8,9 @@ TagManager:
   - ActivatorRetail
   - Product
   - AVProVideoMediaPlayer
+  - RightHandButtonRig
+  - LeftHandButtonRig
+  - SphereForFade
   layers:
   - Default
   - TransparentFX

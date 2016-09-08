@@ -101,7 +101,7 @@ public class RendererEnabler : MonoBehaviour
         targetRenderersAscending = targetRenderersAscending.OrderBy(x => Vector3.Distance(transform.gameObject.gameObject.transform.position, x.transform.position)).ToList();
 
 
-        print("RENDERERS READY fromChildren:" + fromChildrenTotal + " fromChildrenOf:" + fromChildrenOfTotal + " byTag:" + byTagTotal);
+        //print("RENDERERS READY fromChildren:" + fromChildrenTotal + " fromChildrenOf:" + fromChildrenOfTotal + " byTag:" + byTagTotal);
 
 
         if (enablerTimeMode == EnablerTimeMode.transitionTime)
@@ -177,7 +177,7 @@ public class RendererEnabler : MonoBehaviour
     {
         StopCoroutine("DeactivateTargetsCoroutine");
         StartCoroutine("ActivateTargetsCoroutine");
-        print("Interval Enable");
+        Debug.Log("Interval Enable: " + gameObject.name);
     }
 
     public void IntervalEnableTargetsDelayed(float delayTimeSecsArg)
@@ -189,7 +189,7 @@ public class RendererEnabler : MonoBehaviour
     {
         StopCoroutine("ActivateTargetsCoroutine");
         StartCoroutine("DeactivateTargetsCoroutine");
-        print("Interval Deactivate");
+        Debug.Log("Interval Disable: " + gameObject.name);
     }
 
     public void IntervalDisableTargetsDelayed(float delayTimeSecsArg)

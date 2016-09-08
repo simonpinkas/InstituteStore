@@ -49,7 +49,7 @@ public class FogFader : MonoBehaviour
         for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeOutDurationInSecsArg)
         {
             RenderSettings.fogDensity = Mathf.Lerp(onStartDensity, 0.0f, t);
-            Debug.Log("FadeOut RenderSettings.fogDensity:" + RenderSettings.fogDensity);
+            //Debug.Log("FadeOut RenderSettings.fogDensity:" + RenderSettings.fogDensity);
             yield return null;
         }
     }
@@ -69,7 +69,7 @@ public class FogFader : MonoBehaviour
         for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeOutDurationInSecsArg)
         {
             RenderSettings.fogDensity = Mathf.Lerp(currentDensity, onStartDensity, t);
-            Debug.Log("FadeIn RenderSettings.fogDensity:" + RenderSettings.fogDensity);
+            //Debug.Log("FadeIn RenderSettings.fogDensity:" + RenderSettings.fogDensity);
             yield return null;
 
         }
@@ -90,7 +90,7 @@ public class FogFader : MonoBehaviour
         for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeInDurationInSecsArg)
         {
             RenderSettings.fogDensity = Mathf.Lerp(0.0f, onStartDensity, t);
-            Debug.Log("FadeIn RenderSettings.fogDensity:" + RenderSettings.fogDensity);
+            //Debug.Log("FadeIn RenderSettings.fogDensity:" + RenderSettings.fogDensity);
             yield return null;
 
         }
@@ -111,10 +111,8 @@ public class FogFader : MonoBehaviour
         for (float t = 0; t < 1.0f; t += Time.deltaTime / fadeInDurationInSecsArg)
         {
             RenderSettings.fogDensity = Mathf.Lerp(currentDensity, onStartDensity, t);
-            Debug.Log("FadeIn RenderSettings.fogDensity:" + RenderSettings.fogDensity);
+            //Debug.Log("FadeIn RenderSettings.fogDensity:" + RenderSettings.fogDensity);
             yield return null;
-
         }
     }
-    
 }
